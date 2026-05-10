@@ -1,10 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить вакансию - JobBoard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-$END$
+    <div class="form-container">
+        <div class="form-card">
+            <h1>Разместить вакансию</h1>
+
+            <form method="POST" class="job-form">
+                <div class="form-group">
+                    <input type="text" name="title" placeholder="Название вакансии" required>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" name="company" placeholder="Компания" required>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" name="location" placeholder="Город" required>
+                </div>
+
+                <div class="form-group">
+                    <textarea name="description" placeholder="Описание вакансии" rows="6"></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Разместить вакансию</button>
+                <a href="/" class="btn-back">На главную</a>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
