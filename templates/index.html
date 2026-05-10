@@ -1,10 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FirstJob - Поиск работы</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">FirstJob</a>
+            <div class="nav-links">
+                {% if user %}
+                    <span class="user-greeting">👋 Привет, {{ user }}</span>
+                    {% if role == 'employer' %}
+                        <a href="/add_job" class="btn-add-job">➕ Добавить вакансию</a>
+                    {% endif %}
+                    <a href="/logout" class="btn-logout">🚪 Выйти</a>
+                {% else %}
+                    <a href="/login" class="btn-login">🔑 Вход</a>
+                    <a href="/register" class="btn-register">📝 Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
 
+    <div class="container">
+        <div class="hero">
+            <h1>🏆 Найди работу мечты</h1>
+            <p>Лучшие вакансии от ведущих компаний</p>
+        </div>
+
+        <form method="POST" class="search-form">
+            <input type="text" name="user_input" placeholder="🔍 Поиск по названию, компании или городу..." class="search-input">
+            <button type="submit" class="search-btn">🔎 Найти</button>
+        </form>
+
+        <div class="jobs-container">
+            <h2>💼 Вакансии</h2>
+            <div class="jobs-grid">
+                {% for job in jobs %}
+                <div class="job-card">
+                    <h3>{{ job.title }}</h3>
+                    <div class="company">🏢 {{ job.company }}</div>
+                    <div class="location">📍 {{ job.location }}</div>
+                    <p class="description">{{ job.description }}</p>
+                </div>
+                {% else %}
+                <p class="no-jobs">😕 Вакансий не найдено</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </body>
 </html>
