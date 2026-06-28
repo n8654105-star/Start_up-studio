@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CODIFY NPS · Система сбора и анализа</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #F4F2FB; color: #1E1B4B; line-height: 1.5; }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* header */
+    .hero {
+      background: linear-gradient(145deg, #1E1B4B, #4C1D95 60%, #6C3CE1);
+      border-radius: 28px;
+      padding: 36px 44px;
+      color: #fff;
+      margin-bottom: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hero h1 { font-size: 34px; font-weight: 900; letter-spacing: -0.5px; }
+    .hero .sub { font-weight: 700; opacity: 0.8; font-size: 16px; margin-top: 6px; }
+    .badge { background: #F59E0B; color: #1E1B4B; font-weight: 800; font-size: 13px; padding: 6px 18px; border-radius: 100px; display: inline-block; margin-bottom: 8px; }
+
+    /* metrics */
+    .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 28px; }
+    .metric { background: #fff; border: 1px solid #E7E2F5; border-radius: 20px; padding: 22px 16px; text-align: center; }
+    .metric .v { font-size: 36px; font-weight: 900; color: #6C3CE1; line-height: 1; }
+    .metric .l { font-size: 14px; font-weight: 700; color: #6B7280; margin-top: 6px; }
+    .metric .s { font-size: 13px; font-weight: 700; color: #10B981; margin-top: 2px; }
+
+    /* insight */
+    .insight {
+      background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+      border: 1px solid #C7D2FE;
+      border-radius: 22px;
+      padding: 24px 30px;
+      margin-bottom: 32px;
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+    }
+    .insight .ic {
+      width: 52px; height: 52px; border-radius: 14px; background: #4C1D95; color: #fff;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .insight h3 { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+    .insight p { font-size: 15px; font-weight: 600; color: #2E2B5A; }
+
+    /* section */
+    .section { margin-bottom: 36px; }
+    .section>h2 { font-size: 24px; font-weight: 900; margin-bottom: 4px; }
+    .section>.desc { font-size: 15px; font-weight: 600; color: #6B7280; margin-bottom: 20px; }
+
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .chart-card { background: #fff; border: 1px solid #E7E2F5; border-radius: 20px; padding: 22px; }
+    .chart-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+    .chart-box { position: relative; height: 240px; }
+    .full { grid-column: 1 / -1; }
+
+    /* tables */
+    .rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px; }
+    .rank-card { background: #fff; border: 1px solid #E7E2F5; border-radius: 20px; padding: 18px 20px; }
+    .rank-card h4 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+    .rank-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F0EDFA; font-weight: 700; }
+    .rank-row:last-child { border: 0; }
+    .rank-row .pos { color: #6B7280; width: 24px; }
+    .rank-row .name { flex: 1; margin-left: 8px; }
+    .rank-row .score { font-weight: 900; }
+    .score.good { color: #10B981; }
+    .score.warn { color: #F59E0B; }
+    .score.bad { color: #EF4444; }
+
+    /* comments */
+    .comments { max-height: 340px; overflow-y: auto; background: #fff; border: 1px solid #E7E2F5; border-radius: 20px; padding: 12px 16px; }
+    .comment { padding: 12px 0; border-bottom: 1px solid #F0EDFA; }
+    .comment:last-child { border: 0; }
+    .comment .head { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; }
+    .comment .head .tag { font-weight: 800; padding: 2px 12px; border-radius: 40px; font-size: 12px; }
+    .tag.promoter { background: #D1FAE5; color: #065F46; }
+    .tag.passive { background: #FEF3C7; color: #92400E; }
+    .tag.detractor { background: #FEE2E2; color: #991B1B; }
+    .comment .text { font-size: 14px; font-weight: 600; margin-top: 4px; color: #1E1B4B; }
+
+    .foot { text-align: center; color: #6B7280; font-weight: 700; font-size: 13px; margin-top: 40px; border-top: 1px solid #E7E2F5; padding-top: 24px; }
+
+    @media (max-width: 900px) {
+      .metrics { grid-template-columns: repeat(3, 1fr); }
+      .charts { grid-template-columns: 1fr; }
+      .rank-grid { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+    @media (max-width: 600px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .hero h1 { font-size: 26px; }
+    }
+
+    /* filter bar */
+    .filters { display: flex; flex-wrap: wrap; gap: 12px; background: #fff; border: 1px solid #E7E2F5; border-radius: 18px; padding: 14px 20px; margin-bottom: 24px; align-items: center; }
+    .filters select { font-family: 'Nunito'; font-weight: 700; padding: 8px 14px; border: 2px solid #E7E2F5; border-radius: 12px; background: #fff; font-size: 14px; outline: none; }
+    .filters select:focus { border-color: #6C3CE1; }
+    .filters label { font-weight: 800; font-size: 14px; color: #4C1D95; margin-right: 4px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div>
+      <span class="badge">📊 NPS · ЖИВАЯ АНАЛИТИКА</span>
+      <h1>Система сбора и анализа NPS</h1>
+      <div class="sub">CODIFY · Оценка лояльности по курсам и филиалам</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.15); padding: 10px 20px; border-radius: 40px; font-weight: 700;">
+      📅 Обновление: <span id="updateTime">только что</span>
+    </div>
+  </div>
+
+  <!-- фильтры (демо) -->
+  <div class="filters">
+    <label>📌 Филиал:</label>
+    <select id="filterBranch"><option value="all">Все</option><option value="Москва">Москва</option><option value="СПб">СПб</option><option value="Казань">Казань</option><option value="Новосибирск">Новосибирск</option></select>
+    <label>📚 Курс:</label>
+    <select id="filterCourse"><option value="all">Все</option><option value="Python Pro">Python Pro</option><option value="Roblox Pro">Roblox Pro</option><option value="AI Creator">AI Creator</option><option value="Web-разработка">Web-разработка</option></select>
+    <label>⏳ Период:</label>
+    <select id="filterPeriod"><option value="month">Последний месяц</option><option value="quarter">Квартал</option><option value="all">Всё время</option></select>
+  </div>
+
+  <!-- метрики -->
+  <div class="metrics" id="metrics"></div>
+
+  <!-- инсайт -->
+  <div class="insight">
+    <div class="ic">🔎</div>
+    <div>
+      <h3 id="insTitle">Ключевая зона внимания</h3>
+      <p id="insText">Низкий NPS в филиале «Москва» по курсу «Roblox Pro» — детракторы составляют 45%.</p>
+    </div>
+  </div>
+
+  <!-- графики -->
+  <div class="section">
+    <h2>Аналитика NPS</h2>
+    <div class="desc">Динамика, распределение и рейтинг по филиалам и курсам</div>
+    <div class="charts">
+      <div class="chart-card"><h3>Динамика NPS (по месяцам)</h3><div class="chart-box"><canvas id="chartTrend"></canvas></div></div>
+      <div class="chart-card"><h3>Распределение оценок</h3><div class="chart-box"><canvas id="chartDistribution"></canvas></div></div>
+      <div class="chart-card"><h3>NPS по филиалам</h3><div class="chart-box"><canvas id="chartBranch"></canvas></div></div>
+      <div class="chart-card"><h3>NPS по курсам</h3><div class="chart-box"><canvas id="chartCourse"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- таблицы и комментарии -->
+  <div class="section">
+    <div class="rank-grid">
+      <div class="rank-card">
+        <h4>🏆 Рейтинг филиалов по NPS</h4>
+        <div id="branchRank"></div>
+      </div>
+      <div class="rank-card">
+        <h4>📖 Рейтинг курсов по NPS</h4>
+        <div id="courseRank"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>💬 Лента комментариев</h2>
+    <div class="desc">Последние отзывы — детракторы в приоритете</div>
+    <div class="comments" id="commentsFeed"></div>
+  </div>
+
+  <div class="foot" id="foot">CODIFY · NPS система · Данные симулированы для демонстрации</div>
+</div>
+
+<script>
+  // ------------------------------------------------------------
+  // 1. СИМУЛЯЦИЯ ДАННЫХ (30 ответов с мета-информацией)
+  // ------------------------------------------------------------
+  const now = Date.now();
+  function randomDate(daysBack) { return new Date(now - Math.random() * daysBack * 86400000); }
+
+  const BRANCHES = ['Москва', 'СПб', 'Казань', 'Новосибирск'];
+  const COURSES = ['Python Pro', 'Roblox Pro', 'AI Creator', 'Web-разработка'];
+  const NAMES = ['Алексей', 'Мария', 'Иван', 'Екатерина', 'Дмитрий', 'Анна', 'Сергей', 'Ольга', 'Николай', 'Татьяна', 'Артём', 'Виктория'];
+
+  const mockData = [];
+  for (let i = 0; i < 34; i++) {
+    const score = Math.floor(Math.random() * 11); // 0-10
+    const branch = BRANCHES[Math.floor(Math.random() * BRANCHES.length)];
+    const course = COURSES[Math.floor(Math.random() * COURSES.length)];
+    const name = NAMES[Math.floor(Math.random() * NAMES.length)];
+    const age = 10 + Math.floor(Math.random() * 8);
+    const comment = ['Отличный курс!', 'Всё супер, рекомендую', 'Неплохо, но есть нюансы', 'Преподаватель замечательный', 'Слишком сложно', 'Очень интересно', 'Хочу ещё', 'Не оправдало ожиданий', 'Лучший курс!', 'Можно лучше'][Math.floor(Math.random() * 10)];
+    mockData.push({
+      id: i,
+      name,
+      age,
+      branch,
+      course,
+      score,
+      comment: i % 3 === 0 ? comment : '', // часть с комментариями
+      date: randomDate(45),
+      teacher: ['Иванов', 'Петров', 'Сидорова', 'Кузнецов'][Math.floor(Math.random() * 4)]
+    });
+  }
+
+  // ------------------------------------------------------------
+  // 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  // ------------------------------------------------------------
+  function calcNPS(data) {
+    const total = data.length;
+    if (!total) return { nps: 0, promoters: 0, passives: 0, detractors: 0 };
+    const promoters = data.filter(d => d.score >= 9).length;
+    const detractors = data.filter(d => d.score <= 6).length;
+    const passives = data.filter(d => d.score >= 7 && d.score <= 8).length;
+    const nps = Math.round(((promoters - detractors) / total) * 100);
+    return { nps, promoters, passives, detractors, total };
+  }
+
+  function groupBy(arr, key) {
+    const map = {};
+    arr.forEach(item => {
+      const val = item[key];
+      if (!map[val]) map[val] = [];
+      map[val].push(item);
+    });
+    return map;
+  }
+
+  function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  // ------------------------------------------------------------
+  // 3. РЕНДЕРИНГ МЕТРИК
+  // ------------------------------------------------------------
+  function renderMetrics(data) {
+    const stats = calcNPS(data);
+    const avgScore = (data.reduce((sum, d) => sum + d.score, 0) / data.length).toFixed(1);
+    const respRate = 72; // симуляция
+    document.getElementById('metrics').innerHTML = `
+      <div class="metric"><div class="v">${stats.nps}</div><div class="l">Общий NPS</div><div class="s">${stats.nps >= 30 ? '🚀 Отлично' : stats.nps >= 0 ? '⚠️ Нейтрально' : '🔻 Требует внимания'}</div></div>
+      <div class="metric"><div class="v">${stats.total}</div><div class="l">Ответов за период</div><div class="s">+${Math.floor(Math.random()*8+2)}% к прошлому</div></div>
+      <div class="metric"><div class="v">${stats.promoters}</div><div class="l">Промоутеры (9-10)</div><div class="s">${Math.round(stats.promoters/stats.total*100)}%</div></div>
+      <div class="metric"><div class="v">${stats.passives}</div><div class="l">Нейтралы (7-8)</div><div class="s">${Math.round(stats.passives/stats.total*100)}%</div></div>
+      <div class="metric"><div class="v">${stats.detractors}</div><div class="l">Детракторы (0-6)</div><div class="s">${Math.round(stats.detractors/stats.total*100)}%</div></div>
+    `;
+    // инсайт
+    const lowBranch = 'Москва';
+    const lowCourse = 'Roblox Pro';
+    document.getElementById('insTitle').textContent = `🔍 Фокус: филиал «${lowBranch}», курс «${lowCourse}»`;
+    document.getElementById('insText').textContent = `Детракторы составляют 45% в этом сегменте. Рекомендуется провести разбор с преподавателем и усилить сопровождение.`;
+  }
+
+  // ------------------------------------------------------------
+  // 4. ГРАФИКИ
+  // ------------------------------------------------------------
+  function renderCharts(data) {
+    // 4.1 Тренд по месяцам
+    const months = ['Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+    const trendData = months.map((_, idx) => {
+      const subset = data.filter(d => new Date(d.date).getMonth() === (5 + idx) % 12);
+      return calcNPS(subset).nps;
+    });
+    new Chart(document.getElementById('chartTrend'), {
+      type: 'line',
+      data: { labels: months, datasets: [{ label: 'NPS', data: trendData, borderColor: '#6C3CE1', backgroundColor: 'rgba(108,60,225,0.1)', tension: 0.2, fill: true, pointBackgroundColor: '#4C1D95', borderWidth: 3 }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { min: -20, max: 60, grid: { color: '#E7E2F5' } } } }
+    });
+
+    // 4.2 Распределение оценок (столбцы)
+    const dist = Array(11).fill(0);
+    data.forEach(d => dist[d.score]++);
+    new Chart(document.getElementById('chartDistribution'), {
+      type: 'bar',
+      data: { labels: ['0','1','2','3','4','5','6','7','8','9','10'], datasets: [{ data: dist, backgroundColor: ['#FEE2E2','#FEE2E2','#FEE2E2','#FEE2E2','#FEE2E2','#FEE2E2','#FEE2E2','#FEF3C7','#FEF3C7','#D1FAE5','#D1FAE5'], borderRadius: 6 }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { grid: { display: false } }, x: { grid: { display: false } } } }
+    });
+
+    // 4.3 NPS по филиалам
+    const branchGroups = groupBy(data, 'branch');
+    const branchNPS = Object.keys(branchGroups).map(b => ({ name: b, nps: calcNPS(branchGroups[b]).nps, count: branchGroups[b].length }));
+    branchNPS.sort((a,b) => b.nps - a.nps);
+    new Chart(document.getElementById('chartBranch'), {
+      type: 'bar',
+      data: { labels: branchNPS.map(b => b.name), datasets: [{ data: branchNPS.map(b => b.nps), backgroundColor: branchNPS.map(b => b.nps >= 30 ? '#10B981' : b.nps >= 0 ? '#F59E0B' : '#EF4444'), borderRadius: 6 }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+    });
+
+    // 4.4 NPS по курсам
+    const courseGroups = groupBy(data, 'course');
+    const courseNPS = Object.keys(courseGroups).map(c => ({ name: c, nps: calcNPS(courseGroups[c]).nps, count: courseGroups[c].length }));
+    courseNPS.sort((a,b) => b.nps - a.nps);
+    new Chart(document.getElementById('chartCourse'), {
+      type: 'bar',
+      data: { labels: courseNPS.map(c => c.name), datasets: [{ data: courseNPS.map(c => c.nps), backgroundColor: courseNPS.map(c => c.nps >= 30 ? '#10B981' : c.nps >= 0 ? '#F59E0B' : '#EF4444'), borderRadius: 6 }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } } }
+    });
+
+    // Рейтинги (таблицы)
+    const branchRankHtml = branchNPS.map((b, i) => `<div class="rank-row"><span class="pos">${i+1}</span><span class="name">${b.name}</span><span class="score ${b.nps>=30?'good':b.nps>=0?'warn':'bad'}">${b.nps}</span></div>`).join('');
+    document.getElementById('branchRank').innerHTML = branchRankHtml;
+
+    const courseRankHtml = courseNPS.map((c, i) => `<div class="rank-row"><span class="pos">${i+1}</span><span class="name">${c.name}</span><span class="score ${c.nps>=30?'good':c.nps>=0?'warn':'bad'}">${c.nps}</span></div>`).join('');
+    document.getElementById('courseRank').innerHTML = courseRankHtml;
+
+    // Лента комментариев (сначала детракторы)
+    const withComment = data.filter(d => d.comment.trim().length > 0);
+    const sortedComments = [...withComment].sort((a,b) => {
+      const aType = a.score <= 6 ? 0 : a.score <= 8 ? 1 : 2;
+      const bType = b.score <= 6 ? 0 : b.score <= 8 ? 1 : 2;
+      return aType - bType;
+    });
+    const feedHtml = sortedComments.slice(0, 12).map(d => {
+      const tag = d.score <= 6 ? 'Детрактор' : d.score <= 8 ? 'Нейтрал' : 'Промоутер';
+      const cls = d.score <= 6 ? 'detractor' : d.score <= 8 ? 'passive' : 'promoter';
+      return `<div class="comment"><div class="head"><span>${esc(d.name)} · ${d.branch} · ${d.course}</span><span class="tag ${cls}">${tag} ${d.score}/10</span></div><div class="text">“${esc(d.comment)}”</div></div>`;
+    }).join('');
+    document.getElementById('commentsFeed').innerHTML = feedHtml || '<div style="padding:20px;text-align:center;color:#6B7280;">Нет комментариев</div>';
+  }
+
+  // ------------------------------------------------------------
+  // 5. ФИЛЬТРАЦИЯ (демо)
+  // ------------------------------------------------------------
+  function getFilteredData() {
+    const branch = document.getElementById('filterBranch').value;
+    const course = document.getElementById('filterCourse').value;
+    const period = document.getElementById('filterPeriod').value;
+    let filtered = mockData;
+    if (branch !== 'all') filtered = filtered.filter(d => d.branch === branch);
+    if (course !== 'all') filtered = filtered.filter(d => d.course === course);
+    if (period === 'month') {
+      const cutoff = new Date(now - 30 * 86400000);
+      filtered = filtered.filter(d => new Date(d.date) >= cutoff);
+    } else if (period === 'quarter') {
+      const cutoff = new Date(now - 90 * 86400000);
+      filtered = filtered.filter(d => new Date(d.date) >= cutoff);
+    }
+    return filtered;
+  }
+
+  function updateDashboard() {
+    const data = getFilteredData();
+    renderMetrics(data);
+    // пересоздаём графики (удаляем старые)
+    document.querySelectorAll('.chart-box canvas').forEach(c => {
+      const parent = c.parentNode;
+      const newCanvas = document.createElement('canvas');
+      newCanvas.id = c.id;
+      parent.replaceChild(newCanvas, c);
+    });
+    renderCharts(data);
+    document.getElementById('updateTime').textContent = new Date().toLocaleString('ru', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  // ------------------------------------------------------------
+  // 6. ИНИЦИАЛИЗАЦИЯ + ОБРАБОТЧИКИ ФИЛЬТРОВ
+  // ------------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', () => {
+    updateDashboard();
+    document.getElementById('filterBranch').addEventListener('change', updateDashboard);
+    document.getElementById('filterCourse').addEventListener('change', updateDashboard);
+    document.getElementById('filterPeriod').addEventListener('change', updateDashboard);
+  });
+</script>
+</body>
+</html>
